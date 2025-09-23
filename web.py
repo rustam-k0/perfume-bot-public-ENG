@@ -9,25 +9,25 @@ from search import find_original
 from formatter import format_response, welcome_text
 from followup import schedule_followup_once
 
-# --- Загружаем переменные окружения ---
+# --- Load environment variables ---
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 DB_PATH = os.getenv("DB_PATH", "data/perfumes.db")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN не указан в .env!")
+    raise ValueError("BOT_TOKEN not specified in .env!")
 if not WEBHOOK_URL:
-    raise ValueError("WEBHOOK_URL не указан в .env!")
+    raise ValueError("WEBHOOK_URL not specified in .env!")
 
-# --- Инициализация бота и базы данных ---
+# --- Initialize bot and database ---
 bot = telebot.TeleBot(BOT_TOKEN)
 conn = get_connection(DB_PATH)
 
 last_user_ts = {}
 followup_sent = {}
 
-# --- Обработчики ---
+# --- Handlers ---
 @bot.message_handler(commands=["start", "help"])
 def start(msg):
     bot.reply_to(msg, welcome_text())
@@ -49,7 +49,7 @@ def handle_text(msg):
 
     schedule_followup_once(bot, chat_id, now, last_user_ts, followup_sent)
 
-# --- Flask веб-сервер ---
+# --- Flask web server ---
 app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
@@ -63,7 +63,7 @@ def webhook():
     bot.process_new_updates([update])
     return "", 200
 
-# --- Запуск ---
+# --- Launch ---
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     bot.remove_webhook()

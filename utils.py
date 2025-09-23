@@ -1,5 +1,5 @@
 # perfume-bot/utils.py
-# Вспомогательные функции: нормализация строк и транслитерация.
+# Helper functions: string normalization and transliteration.
 
 import re, unicodedata
 

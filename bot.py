@@ -1,6 +1,5 @@
-
 # perfume-bot/bot.py
-# Главный файл: запускает Telegram-бота, обрабатывает сообщения и отвечает.
+# Main file: launches the Telegram bot, handles messages, and responds.
 
 import os
 import time
@@ -12,60 +11,60 @@ from search import find_original
 from formatter import format_response, welcome_text
 from followup import schedule_followup_once
 
-# Загружаем переменные окружения
+# Load environment variables
 load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # токен Telegram-бота
-DB_PATH = os.getenv("DB_PATH", "data/perfumes.db")  # путь к базе данных
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Telegram bot token
+DB_PATH = os.getenv("DB_PATH", "data/perfumes.db")  # database path
 
-# Проверка токена
+# Token check
 if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN не найден в .env. Добавьте токен бота.")
+    raise ValueError("BOT_TOKEN not found in .env. Add the bot token.")
 
-# Создаем объект TeleBot
+# Create TeleBot object
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Подключение к базе данных
+# Connect to the database
 conn = get_connection(DB_PATH)
 
-# Словари для отслеживания последнего сообщения пользователя и follow-up
+# Dictionaries to track user's last message and follow-up
 last_user_ts = {}
 followup_sent = {}
 
-# Команда /start или /help — приветствие
+# /start or /help command — greeting
 @bot.message_handler(commands=["start", "help"])
 def start(msg):
     bot.reply_to(msg, welcome_text())
 
-# Обработка любого текстового сообщения
+# Handle any text message
 @bot.message_handler(func=lambda m: True, content_types=["text"])
 def handle_text(msg):
     chat_id = msg.chat.id
     now = time.time()
     last_user_ts[chat_id] = now
 
-    # Поиск оригинального парфюма
+    # Search for the original perfume
     result = find_original(conn, msg.text)
 
     if not result["ok"]:
-        # Не нашли — просим уточнить
+        # Not found — ask for clarification
         bot.reply_to(msg, result["message"])
         return
 
     original = result["original"]
-    # Получаем все доступные клоны
+    # Get all available clones
     copies = get_copies_by_original_id(conn, original["id"])
 
-    # Формируем красивый ответ и отправляем
+    # Format a nice response and send
     bot.reply_to(msg, format_response(original, copies))
 
-    # Планируем follow-up через 30 секунд (отправится 1 раз)
+    # Schedule follow-up in 30 seconds (sent once)
     schedule_followup_once(bot, chat_id, now, last_user_ts, followup_sent)
 
-# Запуск бота
+# Start the bot
 if __name__ == "__main__":
-    print("Бот запущен — готов принимать сообщения.")
+    print("Bot started — ready to receive messages.")
     try:
-        # Запуск постоянного прослушивания сообщений
+        # Start polling messages indefinitely
         bot.infinity_polling(timeout=60, long_polling_timeout=5)
     except Exception as e:
-        print("Ошибка при запуске бота:", e)
+        print("Error while starting the bot:", e)

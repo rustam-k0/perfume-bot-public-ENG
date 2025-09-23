@@ -1,5 +1,5 @@
 # perfume-bot/check.py
-# Быстрая проверка целостности базы данных (таблицы и счётчики)
+# Quick integrity check for the database (tables and counters)
 
 import os
 import sqlite3
@@ -15,7 +15,7 @@ def table_exists(conn, name):
 
 def main():
     if not os.path.exists(DB_PATH):
-        print("DB не найдена:", DB_PATH)
+        print("DB not found:", DB_PATH)
         return
     conn = sqlite3.connect(DB_PATH)
     for t in ("OriginalPerfume", "CopyPerfume"):
@@ -32,7 +32,7 @@ def main():
     except Exception as e:
         print("Copies: error", e)
 
-    # Примерная проверка: копии с пустым saved_amount при наличии цен
+    # Approximate check: copies with empty saved_amount while prices exist
     try:
         cur.execute("""
             SELECT COUNT(*) FROM CopyPerfume c

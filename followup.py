@@ -1,9 +1,9 @@
 # perfume-bot/followup.py
-# Follow-up сообщение через 30 секунд, если пользователь не ответил.
+# Follow-up message after 30 seconds if the user hasn't replied.
 
 import threading
 
-FOLLOWUP_TEXT = "Ура! 🎉 Кажется, получилось. Хочешь, попробуем ещё разок?"
+FOLLOWUP_TEXT = "Hooray! 🎉 Looks like it worked. Want to try again?"
 
 def schedule_followup_once(bot, chat_id, ts, last_user_ts, followup_sent):
     if followup_sent.get(chat_id):

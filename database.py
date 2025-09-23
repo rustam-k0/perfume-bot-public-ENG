@@ -1,26 +1,26 @@
 # perfume-bot/database.py
-# Работа с SQLite и fuzzy-поиск оригиналов
+# SQLite operations and fuzzy search for originals
 
 import sqlite3
 from rapidfuzz import process, fuzz
 
 def get_connection(path="data/perfumes.db"):
-    """Вернуть sqlite3.Connection. check_same_thread=False для использования в многопоточном окружении бота."""
+    """Return sqlite3.Connection. check_same_thread=False for multithreaded bot environment."""
     conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 
 def fetch_all_originals(conn):
-    """Вернуть все строки OriginalPerfume."""
+    """Return all rows from OriginalPerfume."""
     cur = conn.cursor()
     cur.execute("SELECT id, brand, name, price_eur, url FROM OriginalPerfume")
     return cur.fetchall()
 
 def find_best_originals(conn, query, limit=3, score_cutoff=60):
     """
-    Fuzzy-поиск оригиналов по строке query.
-    Возвращает список словарей: {id, brand, name, score}.
-    score_cutoff — минимальная допустимая похожесть (0-100).
+    Fuzzy search for originals by query string.
+    Returns a list of dicts: {id, brand, name, score}.
+    score_cutoff — minimum acceptable similarity (0-100).
     """
     rows = fetch_all_originals(conn)
     choices = []
@@ -37,7 +37,7 @@ def find_best_originals(conn, query, limit=3, score_cutoff=60):
     if not choices:
         return []
 
-    # Используем token_set_ratio — хорошо для перестановок слов и опечаток
+    # Use token_set_ratio — good for word rearrangements and typos
     raw_matches = process.extract(query, choices, scorer=fuzz.token_set_ratio, limit=limit)
     results = []
     for choice_text, score, idx in raw_matches:

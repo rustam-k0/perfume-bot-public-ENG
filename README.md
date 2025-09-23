@@ -1,23 +1,23 @@
+Вот перевод на английский, структура и пояснения оставлены без изменений кода:
+
 # Perfume Bot MVP
 
-Бот для поиска парфюмов и их популярных клонов с расчетом экономии.
+Bot for searching perfumes and their popular clones with savings calculation.
 
-
-## 📂 Структура проекта
+## 📂 Project Structure
 
 ```
-
 perfume-bot/
 │
 ├── data/
 │   └── perfumes.db
 │
-├── bot.py                  # только запуск и обработчики телеграма
-├── database.py             # работа с SQLite (у тебя уже есть)
-├── search.py               # логика парсинга и поиска (бренд/название, fuzzy)
-├── formatter.py            # сборка красивого текста ответа
-├── followup.py             # логика "Ура! 🎉..." (отправка 1 раз)
-├── utils.py                # нормализация текста, транслитерация
+├── bot.py                  # only Telegram launch and handlers
+├── database.py             # SQLite operations (already provided)
+├── search.py               # parsing and search logic (brand/name, fuzzy)
+├── formatter.py            # assembling nicely formatted text responses
+├── followup.py             # "Hooray! 🎉..." logic (sent once)
+├── utils.py                # text normalization, transliteration
 │
 ├── requirements.txt
 ├── .env
@@ -26,37 +26,41 @@ perfume-bot/
 
 ---
 
-## 🗄️ Структура базы данных (SQLite)
+## 🗄️ Database Structure (SQLite)
 
-База данных состоит из двух основных таблиц:
+The database consists of two main tables:
 
-### 1. Таблица `OriginalPerfume`
-Хранит информацию об оригинальных парфюмах.
+### 1. `OriginalPerfume` Table
 
-| Колонка          | Тип данных | Описание      
-|------------------|------------|-----------------------------
-| `id`             | TEXT       | Уникальный id (Primary Key) |
-| `brand`          | TEXT       | Бренд оригинала             |
-| `name`           | TEXT       | Название оригинала          |
-| `price_eur`      | REAL       | Цена оригинала в евро       |
-| `url`            | TEXT       | Ссылка на страницу оригинала|
+Stores information about original perfumes.
 
-### 2. Таблица `CopyPerfume`
-Хранит информацию о копиях парфюмов, связанных с оригиналом.
+| Column      | Data Type | Description             |
+| ----------- | --------- | ----------------------- |
+| `id`        | TEXT      | Unique id (Primary Key) |
+| `brand`     | TEXT      | Original brand          |
+| `name`      | TEXT      | Original name           |
+| `price_eur` | REAL      | Original price in euros |
+| `url`       | TEXT      | Link to original page   |
 
-| Колонка          | Тип данных | Описание  
-|------------------|------------|-----------
-| `id`             | TEXT       |Уникальный id (Primary Key)
-| `original_id`    | TEXT       | Ссылка на `id` из таблицы `OriginalPerfume` (Foreign Key) |
-| `brand`          | TEXT       | Бренд клона                     |
-| `name`           | TEXT       | Название клона                  |
-| `price_eur`      | REAL       | Цена клона в евро               |
-| `url`            | TEXT       | Ссылка на клон                  |
-| `notes`          | TEXT       | Примечания к аромату            |
-| `saved_amount`   | REAL       | Экономия в %: `(orig_price_eur - dupe_price_eur) / orig_price_eur * 100` |
+### 2. `CopyPerfume` Table
 
-BOT_TOKEN="ВАШ_ТОКЕН_ЗДЕСЬ"
+Stores information about perfume clones linked to originals.
+
+| Column         | Data Type | Description 
+| -------------- | --------- | ----
+| `id`           | TEXT      | Unique id (Primary Key)   
+| `original_id`  | TEXT      | Reference to `id` in `OriginalPerfume` (Foreign Key)  
+| `brand`        | TEXT      | Clone brand 
+| `name`         | TEXT      | Clone name                
+| `price_eur`    | REAL      | Clone price in euros 
+| `url`          | TEXT      | Link to clone 
+| `notes`        | TEXT      | Notes about the scent 
+| `saved_amount` | REAL      | Savings in %: `(orig_price_eur - dupe_price_eur) / orig_price_eur * 100` |
+
+```
+BOT_TOKEN="YOUR_TOKEN_HERE"
 python database.py
 
 pip install -r requirements.txt
 python bot.py
+```

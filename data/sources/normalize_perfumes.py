@@ -1,118 +1,118 @@
-# normalize_perfumes.py (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+# normalize_perfumes.py (FIXED VERSION)
 
-import csv  # Работа с CSV-файлами
-import sqlite3  # Работа с SQLite базой данных
-import os  # Работа с файловой системой
+import csv  # Working with CSV files
+import sqlite3  # Working with SQLite database
+import os  # Working with filesystem
 
-# --- Константы ---
-DATA_DIR = 'data'  # Папка, где лежат CSV и база
-CSV_FILE = os.path.join(DATA_DIR, 'perfumes_master.csv')  # Путь к CSV-файлу
-DB_FILE = os.path.join(DATA_DIR, 'perfumes.db')  # Путь к SQLite базе
+# --- Constants ---
+DATA_DIR = 'data'  # Folder where CSV and database are located
+CSV_FILE = os.path.join(DATA_DIR, 'perfumes_master.csv')  # Path to CSV file
+DB_FILE = os.path.join(DATA_DIR, 'perfumes.db')  # Path to SQLite database
 
 def setup_database(cursor):
-    """Создает таблицы и индексы в базе данных."""
-    # Таблица для оригинальных парфюмов
+    """Creates tables and indexes in the database."""
+    # Table for original perfumes
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS OriginalPerfume (
-        id TEXT PRIMARY KEY,  # Уникальный идентификатор оригинала
-        brand TEXT,  # Бренд оригинала
-        name TEXT,  # Название оригинала
-        price_eur REAL,  # Цена в евро
-        url TEXT  # Ссылка на оригинал
+        id TEXT PRIMARY KEY,  # Unique original ID
+        brand TEXT,  # Original brand
+        name TEXT,  # Original name
+        price_eur REAL,  # Price in euros
+        url TEXT  # Link to original
     )
     ''')
     
-    # Таблица для парфюмов-копий
+    # Table for perfume copies
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS CopyPerfume (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,  # Автоинкрементный ID копии
-        original_id TEXT,  # Ссылка на оригинал
-        brand TEXT,  # Бренд копии
-        name TEXT,  # Название копии
-        price_eur REAL,  # Цена копии в евро
-        url TEXT,  # Ссылка на копию
-        notes TEXT,  # Доп. заметки
-        saved_amount REAL,  # Сколько сэкономлено по сравнению с оригиналом
-        FOREIGN KEY (original_id) REFERENCES OriginalPerfume(id)  # Связь с оригиналом
+        id INTEGER PRIMARY KEY AUTOINCREMENT,  # Auto-increment copy ID
+        original_id TEXT,  # Reference to original
+        brand TEXT,  # Copy brand
+        name TEXT,  # Copy name
+        price_eur REAL,  # Copy price in euros
+        url TEXT,  # Link to copy
+        notes TEXT,  # Additional notes
+        saved_amount REAL,  # Savings compared to original
+        FOREIGN KEY (original_id) REFERENCES OriginalPerfume(id)  # Relation to original
     )
     ''')
     
-    # Индекс для ускорения поиска копий по оригиналу
+    # Index to speed up searching copies by original
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_copy_original_id ON CopyPerfume(original_id)')
-    print("Структура базы данных успешно создана.")
+    print("Database structure successfully created.")
 
 def clean_value(value):
-    """Преобразует пустые строки в None."""
-    return None if not value or value.strip() == '' else value  # Если пустая строка или None → None
+    """Converts empty strings to None."""
+    return None if not value or value.strip() == '' else value  # If empty string or None → None
 
 def to_float(value):
-    """Безопасно преобразует значение во float, возвращает None в случае ошибки."""
+    """Safely converts value to float, returns None on error."""
     if value is None:
-        return None  # Если нет значения, возвращаем None
+        return None  # If no value, return None
     try:
-        return float(value)  # Пробуем преобразовать в float
+        return float(value)  # Try to convert to float
     except (ValueError, TypeError):
-        return None  # При ошибке преобразования возвращаем None
+        return None  # Return None if conversion fails
 
 def process_data():
-    """Основная функция для чтения CSV и записи данных в SQLite."""
-    os.makedirs(DATA_DIR, exist_ok=True)  # Создает папку data, если нет
+    """Main function to read CSV and write data into SQLite."""
+    os.makedirs(DATA_DIR, exist_ok=True)  # Create data folder if missing
     if os.path.exists(DB_FILE):
-        os.remove(DB_FILE)  # Удаляет старую базу, если она есть
+        os.remove(DB_FILE)  # Delete old database if exists
         
-    conn = sqlite3.connect(DB_FILE)  # Создает соединение с базой
-    cursor = conn.cursor()  # Получаем курсор для выполнения SQL
+    conn = sqlite3.connect(DB_FILE)  # Connect to database
+    cursor = conn.cursor()  # Get cursor for executing SQL
     
-    setup_database(cursor)  # Создаем таблицы и индексы
+    setup_database(cursor)  # Create tables and indexes
     
-    # Словарь для хранения ID уже добавленных оригиналов
-    # Ключ: (бренд, название), Значение: id
+    # Dictionary to store already added original IDs
+    # Key: (brand, name), Value: id
     original_id_map = {}
     
     try:
-        with open(CSV_FILE, mode='r', encoding='utf-8') as file:  # Открываем CSV
-            reader = csv.DictReader(file)  # Читаем строки как словари
+        with open(CSV_FILE, mode='r', encoding='utf-8') as file:  # Open CSV
+            reader = csv.DictReader(file)  # Read rows as dictionaries
             
-            for row in reader:  # Проходим по каждой строке CSV
-                og_brand = clean_value(row.get('og_brand'))  # Чистим бренд оригинала
-                og_name = clean_value(row.get('og_name'))  # Чистим название оригинала
+            for row in reader:  # Iterate through each CSV row
+                og_brand = clean_value(row.get('og_brand'))  # Clean original brand
+                og_name = clean_value(row.get('og_name'))  # Clean original name
                 
                 if not og_brand or not og_name:
-                    continue  # Пропускаем строки без бренда или названия
+                    continue  # Skip rows without brand or name
                 
-                original_key = (og_brand, og_name)  # Ключ для карты оригиналов
+                original_key = (og_brand, og_name)  # Key for original map
                 
-                # --- 1. Обработка оригинала ---
-                if original_key not in original_id_map:  # Если оригинал еще не добавлен
-                    original_id_for_db = clean_value(row.get('id'))  # Берем ID оригинала
+                # --- 1. Process original ---
+                if original_key not in original_id_map:  # If original not added yet
+                    original_id_for_db = clean_value(row.get('id'))  # Take original ID
                     
                     if not original_id_for_db:
-                        continue  # Пропускаем без ID
+                        continue  # Skip if no ID
 
                     original_data = (
                         original_id_for_db,  # ID
-                        og_brand,  # Бренд
-                        og_name,  # Название
-                        to_float(clean_value(row.get('og_price_eur'))),  # Цена, float или None
-                        clean_value(row.get('og_url'))  # Ссылка
+                        og_brand,  # Brand
+                        og_name,  # Name
+                        to_float(clean_value(row.get('og_price_eur'))),  # Price, float or None
+                        clean_value(row.get('og_url'))  # URL
                     )
                     cursor.execute(
                         "INSERT INTO OriginalPerfume (id, brand, name, price_eur, url) VALUES (?, ?, ?, ?, ?)",
-                        original_data  # Добавляем оригинал в базу
+                        original_data  # Add original to DB
                     )
-                    original_id_map[original_key] = original_id_for_db  # Сохраняем ID в карту
+                    original_id_map[original_key] = original_id_for_db  # Save ID in map
                 
-                # --- 2. Обработка копии ---
-                correct_original_id = original_id_map[original_key]  # Берем правильный ID оригинала
+                # --- 2. Process copy ---
+                correct_original_id = original_id_map[original_key]  # Get correct original ID
 
                 copy_data = (
-                    correct_original_id,  # ID оригинала
-                    clean_value(row.get('copy_brand')),  # Бренд копии
-                    clean_value(row.get('copy_name')),  # Название копии
-                    to_float(clean_value(row.get('copy_price_eur'))),  # Цена копии
-                    clean_value(row.get('copy_url')),  # Ссылка копии
-                    clean_value(row.get('notes')),  # Заметки
-                    to_float(clean_value(row.get('saved_amount')))  # Сколько сэкономлено
+                    correct_original_id,  # Original ID
+                    clean_value(row.get('copy_brand')),  # Copy brand
+                    clean_value(row.get('copy_name')),  # Copy name
+                    to_float(clean_value(row.get('copy_price_eur'))),  # Copy price
+                    clean_value(row.get('copy_url')),  # Copy URL
+                    clean_value(row.get('notes')),  # Notes
+                    to_float(clean_value(row.get('saved_amount')))  # Savings
                 )
                 cursor.execute(
                     """
@@ -120,19 +120,19 @@ def process_data():
                     (original_id, brand, name, price_eur, url, notes, saved_amount) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                     """,
-                    copy_data  # Добавляем копию в базу
+                    copy_data  # Add copy to DB
                 )
 
-        conn.commit()  # Сохраняем изменения в базе
-        print(f"Данные успешно импортированы. Добавлено {len(original_id_map)} уникальных оригиналов.")
+        conn.commit()  # Commit changes to database
+        print(f"Data successfully imported. Added {len(original_id_map)} unique originals.")
         
     except FileNotFoundError:
-        print(f"Ошибка: файл {CSV_FILE} не найден.")  # Если CSV нет
+        print(f"Error: file {CSV_FILE} not found.")  # If CSV missing
     except Exception as e:
-        print(f"Произошла ошибка: {e}")  # Ловим другие ошибки
-        conn.rollback()  # Откатываем транзакцию
+        print(f"An error occurred: {e}")  # Catch other errors
+        conn.rollback()  # Rollback transaction
     finally:
-        conn.close()  # Закрываем соединение с базой
+        conn.close()  # Close database connection
 
 if __name__ == "__main__":
-    process_data()  # Запускаем обработку данных
+    process_data()  # Run data processing
